@@ -3,7 +3,7 @@ package cursor
 import (
 	"time"
 
-	cursorauth "github.com/router-for-me/CLIProxyAPI/v6/internal/auth/cursor"
+	cursorauth "github.com/kooshapari/CLIProxyAPI/v7/internal/auth/cursor"
 )
 
 type AuthParams = cursorauth.AuthParams
