@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/kooshapari/CLIProxyAPI/v7/internal/pathsafe"
 	"github.com/kooshapari/CLIProxyAPI/v7/pkg/llmproxy/misc"
@@ -48,12 +49,15 @@ func (s *CodeBuddyTokenStorage) SaveTokenToFile(authFilePath string) error {
 	misc.LogSavingCredentials(authFilePath)
 	s.Type = "codebuddy"
 
-	// Defend against go/path-injection (CodeQL alerts #782/#783): constrain
-	// the credential file to its parent directory using pathsafe.SafeContain
-	// so any traversal segment in authFilePath is rejected before it reaches
-	// MkdirAll/OpenFile.
-	parentDir := filepath.Dir(authFilePath)
-	safePath, err := pathsafe.SafeContain(parentDir, authFilePath)
+	// Defend against go/path-injection (CodeQL alerts #782/#783): validate
+	// that authFilePath lies within the expected auth directory and doesn't
+	// use path traversal to escape. We determine the trusted base directory
+	// from misc.GetAuthDir() and validate the file path against it.
+	expectedAuthDir := strings.TrimSpace(misc.GetAuthDir())
+	if expectedAuthDir == "" {
+		return fmt.Errorf("auth directory not configured")
+	}
+	safePath, err := pathsafe.SafeContain(expectedAuthDir, authFilePath)
 	if err != nil {
 		return fmt.Errorf("invalid token file path: %w", err)
 	}

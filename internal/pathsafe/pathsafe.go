@@ -54,9 +54,20 @@ func SafeJoin(base, userInput string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("pathsafe: resolve target: %w", err)
 	}
-	if absCleaned != absBase &&
-		!strings.HasPrefix(absCleaned, absBase+string(filepath.Separator)) {
-		return "", ErrEscape
+	// Handle filesystem root edge case: when absBase is "/" or "C:\", the
+	// prefix check must handle the root specially to avoid "//" or "C:\\"
+	if absCleaned == absBase {
+		return absCleaned, nil
+	}
+	// For root directories, don't append separator (it's already there)
+	if absBase == string(filepath.Separator) || (len(absBase) == 3 && absBase[1] == ':' && absBase[2] == filepath.Separator) {
+		if !strings.HasPrefix(absCleaned, absBase) {
+			return "", ErrEscape
+		}
+	} else {
+		if !strings.HasPrefix(absCleaned, absBase+string(filepath.Separator)) {
+			return "", ErrEscape
+		}
 	}
 	return absCleaned, nil
 }
@@ -82,9 +93,20 @@ func SafeContain(base, fullPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("pathsafe: resolve target: %w", err)
 	}
-	if absFull != absBase &&
-		!strings.HasPrefix(absFull, absBase+string(filepath.Separator)) {
-		return "", ErrEscape
+	// Handle filesystem root edge case: when absBase is "/" or "C:\", the
+	// prefix check must handle the root specially to avoid "//" or "C:\\"
+	if absFull == absBase {
+		return absFull, nil
+	}
+	// For root directories, don't append separator (it's already there)
+	if absBase == string(filepath.Separator) || (len(absBase) == 3 && absBase[1] == ':' && absBase[2] == filepath.Separator) {
+		if !strings.HasPrefix(absFull, absBase) {
+			return "", ErrEscape
+		}
+	} else {
+		if !strings.HasPrefix(absFull, absBase+string(filepath.Separator)) {
+			return "", ErrEscape
+		}
 	}
 	return absFull, nil
 }

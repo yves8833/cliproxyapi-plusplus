@@ -65,3 +65,21 @@ func TestSafeContainRejectsOutside(t *testing.T) {
 		t.Error("expected error for path outside base")
 	}
 }
+
+func TestSafeContainRootDirectory(t *testing.T) {
+	// Test the edge case where base is the filesystem root
+	// This should accept any absolute path under root without error
+	if _, err := SafeContain("/", "/tmp/test.txt"); err != nil {
+		t.Errorf("SafeContain with root base should accept child path: %v", err)
+	}
+	if _, err := SafeContain("/", "/etc/passwd"); err != nil {
+		t.Errorf("SafeContain with root base should accept child path: %v", err)
+	}
+}
+
+func TestSafeJoinRootDirectory(t *testing.T) {
+	// Test the edge case where base is the filesystem root
+	if _, err := SafeJoin("/", "tmp"); err != nil {
+		t.Errorf("SafeJoin with root base should accept simple child: %v", err)
+	}
+}
