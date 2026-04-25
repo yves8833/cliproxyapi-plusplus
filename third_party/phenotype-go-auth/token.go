@@ -95,6 +95,15 @@ func NewBaseTokenStorage(filePath string) *BaseTokenStorage {
 	}
 }
 
+// SetFilePath sets the file path for token storage.
+// This allows updating the storage location after initialization.
+//
+// Parameters:
+//   - filePath: The full path where the token file should be saved/loaded
+func (ts *BaseTokenStorage) SetFilePath(filePath string) {
+	ts.filePath = filePath
+}
+
 // Load reads the token from the file path.
 // Returns an error if the operation fails or the file does not exist.
 func (ts *BaseTokenStorage) Load() error {
