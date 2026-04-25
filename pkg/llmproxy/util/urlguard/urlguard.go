@@ -19,30 +19,28 @@ import (
 	"strings"
 )
 
-// Allowlist is the canonical set of hostname suffix patterns the proxy is
+// allowlist is the canonical set of hostname suffix patterns the proxy is
 // permitted to dial. Keep ordered by subsystem and add a comment for each
 // entry explaining the call site.
 //
 // Patterns:
 //   - ".example.com"  → any subdomain of example.com
 //   - "host.example"  → exact hostname only
-var Allowlist = []string{
+var allowlist = []string{
 	// AWS SSO OIDC + CodeWhisperer (Kiro auth flows)
 	".amazonaws.com",
-	// Google Antigravity / Cloud Code (executor base URLs)
+	// Google Antigravity / Cloud Code (executor base URLs + OAuth token endpoint)
 	".googleapis.com",
-	// Google OAuth token endpoint (antigravity refresh)
-	"oauth2.googleapis.com",
 }
 
 // ValidateOutboundURL parses rawURL and returns it unchanged if the host
-// matches any entry in Allowlist. Otherwise it returns an error describing
+// matches any entry in allowlist. Otherwise it returns an error describing
 // the rejected host. Schemes other than http/https are always rejected.
 //
 // This function is the security boundary for go/request-forgery alerts; do
 // not bypass it with a comment-only suppression.
 func ValidateOutboundURL(rawURL string) (string, error) {
-	return ValidateOutboundURLAgainst(rawURL, Allowlist)
+	return ValidateOutboundURLAgainst(rawURL, allowlist)
 }
 
 // ValidateOutboundURLAgainst is the testable form of ValidateOutboundURL
