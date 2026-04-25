@@ -121,6 +121,30 @@ func (fm *FingerprintManager) generateFingerprint(tokenKey string) *Fingerprint 
 	}
 
 	fp.KiroHash = fm.generateKiroHash(tokenKey, kiroVersion, osType)
+
+	// Apply global fingerprint config overrides if set
+	cfg := GetGlobalFingerprintConfig()
+	if cfg != nil {
+		if cfg.StreamingSDKVersion != "" {
+			fp.SDKVersion = cfg.StreamingSDKVersion
+		}
+		if cfg.OSType != "" {
+			fp.OSType = cfg.OSType
+		}
+		if cfg.OSVersion != "" {
+			fp.OSVersion = cfg.OSVersion
+		}
+		if cfg.NodeVersion != "" {
+			fp.NodeVersion = cfg.NodeVersion
+		}
+		if cfg.KiroVersion != "" {
+			fp.KiroVersion = cfg.KiroVersion
+		}
+		if cfg.KiroHash != "" {
+			fp.KiroHash = cfg.KiroHash
+		}
+	}
+
 	return fp
 }
 
