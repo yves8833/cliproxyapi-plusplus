@@ -72,8 +72,8 @@ func TestOpenAIToClaude_StreamAnnotationsAsCitations(t *testing.T) {
 
 	var messageDelta string
 	for _, r := range results {
-		if gjson.Get(r, "type").String() == "message_delta" {
-			messageDelta = r
+		if gjson.GetBytes(r, "type").String() == "message_delta" {
+			messageDelta = string(r)
 			break
 		}
 	}
@@ -117,14 +117,14 @@ func TestOpenAIToClaude_NonStreamAnnotationsAsCitations(t *testing.T) {
 	out := sdktranslator.TranslateNonStream(ctx, sdktranslator.FormatOpenAI, sdktranslator.FormatClaude, model, reqJSON, reqJSON, rawJSON, &param)
 
 	// Verify citations on response
-	citCount := gjson.Get(out, "citations.#").Int()
+	citCount := gjson.GetBytes(out, "citations.#").Int()
 	if citCount != 2 {
 		t.Fatalf("expected 2 citations, got %d: %s", citCount, out)
 	}
-	if url := gjson.Get(out, "citations.0.url").String(); url != "https://example.com/1" {
+	if url := gjson.GetBytes(out, "citations.0.url").String(); url != "https://example.com/1" {
 		t.Fatalf("expected citations[0].url=https://example.com/1, got %q", url)
 	}
-	if url := gjson.Get(out, "citations.1.url").String(); url != "https://example.com/2" {
+	if url := gjson.GetBytes(out, "citations.1.url").String(); url != "https://example.com/2" {
 		t.Fatalf("expected citations[1].url=https://example.com/2, got %q", url)
 	}
 

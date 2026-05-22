@@ -9,12 +9,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kooshapari/CLIProxyAPI/v7/pkg/llmproxy/registry"
-	cliproxyexecutor "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy/executor"
+	cliproxyexecutor "github.com/kooshapari/CLIProxyAPI/v7/sdk/cliproxy/executor"
 )
 
 func TestManager_ShouldRetryAfterError_RespectsAuthRequestRetryOverride(t *testing.T) {
 	m := NewManager(nil, nil, nil)
-	m.SetRetryConfig(3, 30*time.Second, 0)
+	m.SetRetryConfig(3, 30*time.Second)
 
 	model := "test-model"
 	next := time.Now().Add(5 * time.Second)
@@ -37,7 +37,7 @@ func TestManager_ShouldRetryAfterError_RespectsAuthRequestRetryOverride(t *testi
 		t.Fatalf("register auth: %v", errRegister)
 	}
 
-	_, _, maxWait := m.retrySettings()
+	_, maxWait := m.retrySettings()
 	wait, shouldRetry := m.shouldRetryAfterError(&Error{HTTPStatus: 500, Message: "boom"}, 0, []string{"claude"}, model, maxWait)
 	if shouldRetry {
 		t.Fatalf("expected shouldRetry=false for request_retry=0, got true (wait=%v)", wait)
