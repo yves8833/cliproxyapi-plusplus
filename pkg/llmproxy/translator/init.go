@@ -1,6 +1,11 @@
 package translator
 
 import (
+	// Triggers the central init() that registers every request/response transform
+	// in the shared sdktranslator registry. Without this, the registry stays empty
+	// and TranslateNonStream falls through to returning the upstream payload as-is.
+	_ "github.com/kooshapari/CLIProxyAPI/v7/pkg/llmproxy/translator/translator"
+
 	_ "github.com/kooshapari/CLIProxyAPI/v7/pkg/llmproxy/translator/claude/gemini"
 	_ "github.com/kooshapari/CLIProxyAPI/v7/pkg/llmproxy/translator/claude/gemini-cli"
 	_ "github.com/kooshapari/CLIProxyAPI/v7/pkg/llmproxy/translator/claude/openai/chat-completions"
