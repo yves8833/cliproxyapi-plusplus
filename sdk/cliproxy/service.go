@@ -533,8 +533,6 @@ func (s *Service) Run(ctx context.Context) error {
 	s.ensureWebsocketGateway()
 	if s.server != nil && s.wsGateway != nil {
 		s.server.AttachWebsocketRoute(s.wsGateway.Path(), s.wsGateway.Handler())
-		// Codex expects WebSocket at /v1/responses; register same handler for compatibility
-		s.server.AttachWebsocketRoute("/v1/responses", s.wsGateway.Handler())
 		s.server.SetWebsocketAuthChangeHandler(func(oldEnabled, newEnabled bool) {
 			if oldEnabled == newEnabled {
 				return
