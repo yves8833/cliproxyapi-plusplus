@@ -554,17 +554,6 @@ func GetGitHubCopilotModels() []*ModelInfo {
 			MaxCompletionTokens: 65536,
 		},
 		{
-			ID:                  "grok-code-fast-1",
-			Object:              "model",
-			Created:             now,
-			OwnedBy:             "github-copilot",
-			Type:                "github-copilot",
-			DisplayName:         "Grok Code Fast 1",
-			Description:         "xAI Grok Code Fast 1 via GitHub Copilot",
-			ContextLength:       128000,
-			MaxCompletionTokens: 16384,
-		},
-		{
 			ID:                  "oswe-vscode-prime",
 			Object:              "model",
 			Created:             now,
