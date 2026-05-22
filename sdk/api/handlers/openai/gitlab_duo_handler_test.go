@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	internalconfig "github.com/kooshapari/CLIProxyAPI/v7/pkg/llmproxy/config"
 	"github.com/kooshapari/CLIProxyAPI/v7/pkg/llmproxy/registry"
-	runtimeexecutor "github.com/kooshapari/CLIProxyAPI/v7/pkg/llmproxy/runtime/executor"
+	runtimeexecutor "github.com/kooshapari/CLIProxyAPI/v7/pkg/llmproxy/executor"
 	_ "github.com/kooshapari/CLIProxyAPI/v7/pkg/llmproxy/translator"
 	"github.com/kooshapari/CLIProxyAPI/v7/sdk/api/handlers"
 	coreauth "github.com/kooshapari/CLIProxyAPI/v7/sdk/cliproxy/auth"

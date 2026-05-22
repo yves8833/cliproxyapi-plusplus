@@ -316,12 +316,12 @@ func TestManagerCustomSelector_FallsBackToLegacyPath(t *testing.T) {
 	manager.auths["auth-a"] = &Auth{ID: "auth-a", Provider: "gemini"}
 	manager.auths["auth-b"] = &Auth{ID: "auth-b", Provider: "gemini"}
 
-	got, _, errPick := manager.pickNext(context.Background(), "gemini", "", cliproxyexecutor.Options{}, map[string]struct{}{})
+	got, _, _, errPick := manager.pickNextMixed(context.Background(), []string{"gemini"}, "", cliproxyexecutor.Options{}, map[string]struct{}{})
 	if errPick != nil {
-		t.Fatalf("pickNext() error = %v", errPick)
+		t.Fatalf("pickNextMixed() error = %v", errPick)
 	}
 	if got == nil {
-		t.Fatalf("pickNext() auth = nil")
+		t.Fatalf("pickNextMixed() auth = nil")
 	}
 	if selector.calls != 1 {
 		t.Fatalf("selector.calls = %d, want %d", selector.calls, 1)

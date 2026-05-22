@@ -41,7 +41,9 @@ func TestConvertGeminiResponseToOpenAIResponses_UnwrapAndAggregateText(t *testin
 	var param any
 	var out [][]byte
 	for _, line := range in {
-		out = append(out, ConvertGeminiResponseToOpenAIResponses(context.Background(), "test-model", originalReq, nil, []byte(line), &param)...)
+		for _, s := range ConvertGeminiResponseToOpenAIResponses(context.Background(), "test-model", originalReq, nil, []byte(line), &param) {
+			out = append(out, []byte(s))
+		}
 	}
 
 	var (
@@ -165,7 +167,9 @@ func TestConvertGeminiResponseToOpenAIResponses_ReasoningEncryptedContent(t *tes
 	var param any
 	var out [][]byte
 	for _, line := range in {
-		out = append(out, ConvertGeminiResponseToOpenAIResponses(context.Background(), "test-model", nil, nil, []byte(line), &param)...)
+		for _, s := range ConvertGeminiResponseToOpenAIResponses(context.Background(), "test-model", nil, nil, []byte(line), &param) {
+			out = append(out, []byte(s))
+		}
 	}
 
 	var (
@@ -205,7 +209,9 @@ func TestConvertGeminiResponseToOpenAIResponses_FunctionCallEventOrder(t *testin
 	var param any
 	var out [][]byte
 	for _, line := range in {
-		out = append(out, ConvertGeminiResponseToOpenAIResponses(context.Background(), "test-model", nil, nil, []byte(line), &param)...)
+		for _, s := range ConvertGeminiResponseToOpenAIResponses(context.Background(), "test-model", nil, nil, []byte(line), &param) {
+			out = append(out, []byte(s))
+		}
 	}
 
 	posAdded := []int{-1, -1, -1}
@@ -309,7 +315,9 @@ func TestConvertGeminiResponseToOpenAIResponses_ResponseOutputOrdering(t *testin
 	var param any
 	var out [][]byte
 	for _, line := range in {
-		out = append(out, ConvertGeminiResponseToOpenAIResponses(context.Background(), "test-model", nil, nil, []byte(line), &param)...)
+		for _, s := range ConvertGeminiResponseToOpenAIResponses(context.Background(), "test-model", nil, nil, []byte(line), &param) {
+			out = append(out, []byte(s))
+		}
 	}
 
 	posFuncDone := -1

@@ -17,7 +17,7 @@ func TestConvertCodexResponseToGemini(t *testing.T) {
 	if len(got) != 1 {
 		t.Fatalf("expected 1 chunk, got %d", len(got))
 	}
-	res := gjson.Parse(got[0])
+	res := gjson.ParseBytes(got[0])
 	if res.Get("responseId").String() != "resp_123" {
 		t.Errorf("unexpected output: %s", got[0])
 	}
@@ -28,7 +28,7 @@ func TestConvertCodexResponseToGemini(t *testing.T) {
 	if len(got) != 1 {
 		t.Fatalf("expected 1 chunk, got %d", len(got))
 	}
-	res = gjson.Parse(got[0])
+	res = gjson.ParseBytes(got[0])
 	if res.Get("candidates.0.content.parts.0.text").String() != "hello" {
 		t.Errorf("unexpected output: %s", got[0])
 	}
@@ -47,7 +47,7 @@ func TestConvertCodexResponseToGeminiNonStream(t *testing.T) {
 	}}`)
 
 	got := ConvertCodexResponseToGeminiNonStream(context.Background(), "gemini-1.5-pro", nil, nil, raw, nil)
-	res := gjson.Parse(got)
+	res := gjson.ParseBytes(got)
 	if res.Get("responseId").String() != "resp_123" {
 		t.Errorf("expected id resp_123, got %s", res.Get("responseId").String())
 	}

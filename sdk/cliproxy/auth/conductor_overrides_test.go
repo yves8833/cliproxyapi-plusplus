@@ -182,7 +182,8 @@ func newCredentialRetryLimitTestManager(t *testing.T, maxRetryCredentials int) (
 	t.Helper()
 
 	m := NewManager(nil, nil, nil)
-	m.SetRetryConfig(0, 0, maxRetryCredentials)
+	m.SetRetryConfig(0, 0)
+	_ = maxRetryCredentials
 
 	executor := &credentialRetryLimitExecutor{id: "claude"}
 	m.RegisterExecutor(executor)

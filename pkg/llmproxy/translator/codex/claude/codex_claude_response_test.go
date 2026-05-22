@@ -46,7 +46,7 @@ func TestConvertCodexResponseToClaudeNonStream(t *testing.T) {
 	}}`)
 
 	got := ConvertCodexResponseToClaudeNonStream(context.Background(), "claude-3", nil, nil, raw, nil)
-	res := gjson.Parse(got)
+	res := gjson.ParseBytes(got)
 	if res.Get("id").String() != "resp_123" {
 		t.Errorf("expected id resp_123, got %s", res.Get("id").String())
 	}
