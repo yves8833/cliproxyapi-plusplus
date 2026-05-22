@@ -34,6 +34,12 @@ type modelStore struct {
 
 var modelsCatalogStore = &modelStore{}
 
+// embeddedCatalog holds the immutable baseline parsed from the embedded
+// models.json. Remote refreshes are merged into this base on a per-section
+// basis so an upstream removal or breakage cannot regress the catalog below
+// what shipped with the binary.
+var embeddedCatalog *staticModelsJSON
+
 var updaterOnce sync.Once
 
 // ModelRefreshCallback is invoked when startup or periodic model refresh detects changes.
@@ -65,10 +71,15 @@ func SetModelRefreshCallback(cb ModelRefreshCallback) {
 }
 
 func init() {
-	// Load embedded data as fallback on startup.
-	if err := loadModelsFromBytes(embeddedModelsJSON, "embed"); err != nil {
+	parsed, err := parseAndValidateCatalog(embeddedModelsJSON, "embed")
+	if err != nil {
 		panic(fmt.Sprintf("registry: failed to parse embedded models.json: %v", err))
 	}
+	embeddedCatalog = parsed
+
+	modelsCatalogStore.mu.Lock()
+	modelsCatalogStore.data = parsed
+	modelsCatalogStore.mu.Unlock()
 }
 
 // StartModelsUpdater starts a background updater that fetches models
@@ -121,12 +132,17 @@ func tryRefreshModels(ctx context.Context, label string) {
 		return
 	}
 
-	// Detect changes before updating store.
-	changed := detectChangedProviders(oldData, parsed)
+	merged, fallbacks := mergeRemoteIntoBase(embeddedCatalog, parsed)
+	if len(fallbacks) > 0 {
+		log.Infof("%s: %d section(s) fell back to embedded baseline: %s", label, len(fallbacks), strings.Join(fallbacks, "; "))
+	}
 
-	// Update store with new data regardless.
+	// Detect changes before updating store.
+	changed := detectChangedProviders(oldData, merged)
+
+	// Update store with merged data regardless.
 	modelsCatalogStore.mu.Lock()
-	modelsCatalogStore.data = parsed
+	modelsCatalogStore.data = merged
 	modelsCatalogStore.mu.Unlock()
 
 	if len(changed) == 0 {
@@ -136,6 +152,49 @@ func tryRefreshModels(ctx context.Context, label string) {
 
 	log.Infof("%s completed from %s, changes detected for providers: %v", label, url, changed)
 	notifyModelRefresh(changed)
+}
+
+// mergeRemoteIntoBase produces a new catalog where each section is taken from
+// remote when it passes per-section validation, otherwise from the embedded
+// base. Returns the merged catalog and a list of "<section>: <reason>" strings
+// describing the sections that fell back. Sections present in remote but not
+// declared on staticModelsJSON (e.g. providers we don't support) are dropped
+// during JSON unmarshal and never propagate.
+func mergeRemoteIntoBase(base, remote *staticModelsJSON) (*staticModelsJSON, []string) {
+	if base == nil {
+		return remote, nil
+	}
+	if remote == nil {
+		clone := *base
+		return &clone, nil
+	}
+
+	merged := *base
+	var fallbacks []string
+
+	pick := func(section string, baseList, remoteList []*ModelInfo, assign func([]*ModelInfo)) {
+		if ok, reason := isSectionUsable(section, remoteList); ok {
+			assign(remoteList)
+		} else {
+			assign(baseList)
+			fallbacks = append(fallbacks, fmt.Sprintf("%s (%s)", section, reason))
+		}
+	}
+
+	pick("claude", base.Claude, remote.Claude, func(v []*ModelInfo) { merged.Claude = v })
+	pick("gemini", base.Gemini, remote.Gemini, func(v []*ModelInfo) { merged.Gemini = v })
+	pick("vertex", base.Vertex, remote.Vertex, func(v []*ModelInfo) { merged.Vertex = v })
+	pick("gemini-cli", base.GeminiCLI, remote.GeminiCLI, func(v []*ModelInfo) { merged.GeminiCLI = v })
+	pick("aistudio", base.AIStudio, remote.AIStudio, func(v []*ModelInfo) { merged.AIStudio = v })
+	pick("codex-free", base.CodexFree, remote.CodexFree, func(v []*ModelInfo) { merged.CodexFree = v })
+	pick("codex-team", base.CodexTeam, remote.CodexTeam, func(v []*ModelInfo) { merged.CodexTeam = v })
+	pick("codex-plus", base.CodexPlus, remote.CodexPlus, func(v []*ModelInfo) { merged.CodexPlus = v })
+	pick("codex-pro", base.CodexPro, remote.CodexPro, func(v []*ModelInfo) { merged.CodexPro = v })
+	pick("iflow", base.IFlow, remote.IFlow, func(v []*ModelInfo) { merged.IFlow = v })
+	pick("kimi", base.Kimi, remote.Kimi, func(v []*ModelInfo) { merged.Kimi = v })
+	pick("antigravity", base.Antigravity, remote.Antigravity, func(v []*ModelInfo) { merged.Antigravity = v })
+
+	return &merged, fallbacks
 }
 
 // fetchModelsFromRemote tries all remote URLs and returns the parsed model catalog
@@ -177,10 +236,6 @@ func fetchModelsFromRemote(ctx context.Context) (*staticModelsJSON, string) {
 		var parsed staticModelsJSON
 		if err := json.Unmarshal(data, &parsed); err != nil {
 			log.Warnf("models parse failed from %s: %v", url, err)
-			continue
-		}
-		if err := validateModelsCatalog(&parsed); err != nil {
-			log.Warnf("models validate failed from %s: %v", url, err)
 			continue
 		}
 
@@ -296,19 +351,15 @@ func mergeProviderNames(existing, incoming []string) []string {
 	return merged
 }
 
-func loadModelsFromBytes(data []byte, source string) error {
+func parseAndValidateCatalog(data []byte, source string) (*staticModelsJSON, error) {
 	var parsed staticModelsJSON
 	if err := json.Unmarshal(data, &parsed); err != nil {
-		return fmt.Errorf("%s: decode models catalog: %w", source, err)
+		return nil, fmt.Errorf("%s: decode models catalog: %w", source, err)
 	}
 	if err := validateModelsCatalog(&parsed); err != nil {
-		return fmt.Errorf("%s: validate models catalog: %w", source, err)
+		return nil, fmt.Errorf("%s: validate models catalog: %w", source, err)
 	}
-
-	modelsCatalogStore.mu.Lock()
-	modelsCatalogStore.data = &parsed
-	modelsCatalogStore.mu.Unlock()
-	return nil
+	return &parsed, nil
 }
 
 func getModels() *staticModelsJSON {
@@ -369,4 +420,14 @@ func validateModelSection(section string, models []*ModelInfo) error {
 		seen[modelID] = struct{}{}
 	}
 	return nil
+}
+
+// isSectionUsable reports whether a remote-supplied section can be safely
+// adopted on its own. Empty sections, nil entries, blank ids, and duplicates
+// all force a fallback to the embedded baseline for that specific provider.
+func isSectionUsable(section string, models []*ModelInfo) (bool, string) {
+	if err := validateModelSection(section, models); err != nil {
+		return false, err.Error()
+	}
+	return true, ""
 }
